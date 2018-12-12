@@ -1,0 +1,145 @@
+kind: Template
+apiVersion: v1
+labels:
+  template: ised-nginx-template
+message: |-
+  The following items have been created in your project:
+
+                Service: ised-nginx-${ENVIRONMENT}
+                  Route: ${ENVIRONMENT}.ised-isde.canada.ca
+metadata:
+  name: ised-nginx-template
+  annotations:
+    openshift.io/display-name: "ISED NGiNX Proxy"
+    description: >-
+      Reverse proxy for OpenShift apps, as well as redirect epic (/eic and /utils) resources.
+    iconClass: icon-nginx
+    tags: "nginx,proxy,ised"
+    openshift.io/provider-display-name: "ISED Canada"
+    openshift.io/documentation-url: "https://github.com/ised-isde-canada/ised-nginx-s2i"
+objects:
+# NGiNX
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations: null
+    labels:
+      app: ised-nginx-${ENVIRONMENT}
+    name: ised-nginx-${ENVIRONMENT}
+  spec:
+    replicas: 1
+    selector:
+      app: ised-nginx-${ENVIRONMENT}
+      deploymentconfig: ised-nginx-${ENVIRONMENT}
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: ised-nginx-${ENVIRONMENT}
+          deploymentconfig: ised-nginx-${ENVIRONMENT}
+      spec:
+        containers:
+        - env:
+          - name: ENVIRONMENT
+            value: "${ENVIRONMENT}"
+          imagePullPolicy: Always
+          name: ised-nginx
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              cpu: 100m
+          readinessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: "/eic/site/080.nsf/eng/home"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 3
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: "/eic/site/080.nsf/eng/home"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 180
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ised-nginx
+        from:
+          kind: ImageStreamTag
+          name: ised-nginx:${ENVIRONMENT}
+          namespace: ised-ci
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations: null
+    creationTimestamp: null
+    labels:
+      app: ised-nginx-${ENVIRONMENT}
+    name: ised-nginx-${ENVIRONMENT}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      deploymentconfig: ised-nginx-${ENVIRONMENT}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+# API route.
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: 192.197.178.2/32
+    labels:
+      app: ised-nginx-${ENVIRONMENT}
+    name: ised-nginx-${ENVIRONMENT}
+  spec:
+    host: "${ENVIRONMENT}.ised-isde.canada.ca"
+    path: "/"
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: ised-nginx-${ENVIRONMENT}
+    tls:
+      termination: edge
+# Parameters
+parameters:
+  - name: ENVIRONMENT
+    description: "Environment (e.g. dev, uat, bob...)."
+    required: true
+    value: null

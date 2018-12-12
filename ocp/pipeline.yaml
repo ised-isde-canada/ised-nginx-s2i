@@ -1,0 +1,44 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    app: drupal-wxt
+    name: drupal-wxt-pipeline
+    template: drupal-wxt
+  name: drupal-wxt-pipeline
+spec:
+  failedBuildsHistoryLimit: 5
+  nodeSelector: {}
+  output: {}
+  postCommit: {}
+  resources: {}
+  runPolicy: Parallel
+  strategy:
+    jenkinsPipelineStrategy:
+      jenkinsfile: "try {\n    node() {\n        stage('build') {\n            openshift.withCluster()
+        {\n                openshift.withProject('ised-ci') {\n                    def
+        bld = openshift.startBuild('drupal-wxt')\n                    bld.untilEach
+        {\n                        return it.object().status.phase == \"Running\"\n
+        \                   }\n                    bld.logs('-f')\n                }
+        \ \n            }\n        }\n        stage('tag-dev') {\n            input('Promote
+        to DEV?')\n            openshift.withCluster() {\n                openshift.withProject()
+        {\n                    openshift.tag(\"drupal-wxt:latest\", \"ised-registry/drupal-wxt:dev\")\n
+        \               }\n            }\n        }\n        stage('tag-uat') {\n
+        \           input('Promote to UAT?')\n            openshift.withCluster()
+        {\n                openshift.withProject() {\n                    openshift.tag(\"ised-registry/drupal-wxt:dev\",
+        \"ised-registry/drupal-wxt:uat\")\n                }\n            }\n        }\n
+        \       stage('tag-qa') {\n            input('Promote to QA?')\n            openshift.withCluster()
+        {\n                openshift.withProject() {\n                    openshift.tag(\"ised-registry/drupal-wxt:uat\",
+        \"ised-registry/drupal-wxt:qa\")\n                }\n            }\n        }\n
+        \   }\n} catch (err) {\n    echo \"in catch block\"\n    echo \"Caught: ${err}\"\n
+        \   currentBuild.result = 'FAILURE'\n    throw err\n}          "
+    type: JenkinsPipeline
+  successfulBuildsHistoryLimit: 5
+  triggers:
+  - type: ConfigChange
+  - github:
+      secretReference:
+        name: drupal-wxt
+    type: GitHub
+status:
+  lastVersion: 28

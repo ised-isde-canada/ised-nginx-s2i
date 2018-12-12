@@ -1,0 +1,57 @@
+kind: Template
+apiVersion: v1
+labels:
+  template: ised-nginx-build-template
+message: |-
+  The following build has been created in your project: ised-nginx-${BRANCH}.
+metadata:
+  name: ised-nginx-build-template
+  annotations:
+    openshift.io/display-name: "ISED NGiNX"
+    description: >-
+      ISED NGiNX reverse proxy build.
+    iconClass: icon-nginx
+    tags: "nginx,proxy"
+    openshift.io/provider-display-name: "ISED Canada"
+    openshift.io/documentation-url: "https://github.com/ised-isde-canada/ised-nginx-s2i"
+objects:
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      app: ised-nginx-${BRANCH}
+      template: ised-nginx-template
+    name: ised-nginx-${BRANCH}
+  spec:
+    failedBuildsHistoryLimit: 5
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ised-nginx:${BRANCH}
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      git:
+        ref: ${BRANCH}
+        uri: https://github.com/ised-isde-canada/ised-nginx-s2i
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: nginx:1.12
+          namespace: openshift
+      type: Source
+    successfulBuildsHistoryLimit: 5
+    triggers:
+    - imageChange:
+      type: ImageChange
+    - type: ConfigChange
+# Parameters
+parameters:
+  - name: BRANCH
+    description: "Branch name (e.g. dev, uat, qa, prod...)."
+    required: true
+    value: null
