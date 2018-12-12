@@ -1,0 +1,11 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app: ised-nginx-s2i
+    application: ised-nginx
+    template: ised-nginx-s2i
+  name: ised-nginx
+spec:
+  lookupPolicy:
+    local: false
