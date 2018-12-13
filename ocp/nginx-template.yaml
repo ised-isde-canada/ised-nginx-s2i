@@ -126,6 +126,7 @@ objects:
       haproxy.router.openshift.io/ip_whitelist: 192.197.178.2/32
     labels:
       app: ised-nginx-${ENVIRONMENT}
+      domain: ised
     name: ised-nginx-${ENVIRONMENT}
   spec:
     host: "${ENVIRONMENT}.ised-isde.canada.ca"
