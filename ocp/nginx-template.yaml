@@ -1,18 +1,23 @@
 kind: Template
 apiVersion: v1
 labels:
-  template: ised-nginx-template
+  template: ised-nginx-non-prod-template
 message: |-
   The following items have been created in your project:
 
-                Service: ised-nginx-${ENVIRONMENT}
-                  Route: ${ENVIRONMENT}.ised-isde.canada.ca
+                Service: ised-nginx
+                 Routes: dev.ised-isde.canada.ca
+                         intranet-dev.ised-isde.canada.ca
+                         uat.ised-isde.canada.ca
+                         intranet-uat.ised-isde.canada.ca
+                         qa.ised-isde.canada.ca
+                         intranet-qa.ised-isde.canada.ca
 metadata:
-  name: ised-nginx-template
+  name: ised-nginx-non-prod-template
   annotations:
-    openshift.io/display-name: "ISED NGiNX Proxy"
+    openshift.io/display-name: "ISED NGiNX Proxy - Non-PROD"
     description: >-
-      Reverse proxy for OpenShift apps, as well as redirect epic (/eic and /utils) resources.
+      Reverse proxy for Non-PROD OpenShift apps, as well as redirect epic (/eic and /utils) resources.
     iconClass: icon-nginx
     tags: "nginx,proxy,ised"
     openshift.io/provider-display-name: "ISED Canada"
@@ -24,13 +29,13 @@ objects:
   metadata:
     annotations: null
     labels:
-      app: ised-nginx-${ENVIRONMENT}
-    name: ised-nginx-${ENVIRONMENT}
+      app: ised-nginx-non-prod
+    name: ised-nginx-non-prod
   spec:
     replicas: 1
     selector:
-      app: ised-nginx-${ENVIRONMENT}
-      deploymentconfig: ised-nginx-${ENVIRONMENT}
+      app: ised-nginx-non-prod
+      deploymentconfig: ised-nginx-non-prod
     strategy:
       activeDeadlineSeconds: 21600
       resources: {}
@@ -44,13 +49,13 @@ objects:
     template:
       metadata:
         labels:
-          app: ised-nginx-${ENVIRONMENT}
-          deploymentconfig: ised-nginx-${ENVIRONMENT}
+          app: ised-nginx-non-prod
+          deploymentconfig: ised-nginx-non-prod
       spec:
         containers:
         - env:
           - name: ENVIRONMENT
-            value: "${ENVIRONMENT}"
+            value: "non-prod"
           imagePullPolicy: Always
           name: ised-nginx
           ports:
@@ -95,7 +100,7 @@ objects:
         - ised-nginx
         from:
           kind: ImageStreamTag
-          name: ised-nginx:${ENVIRONMENT}
+          name: ised-nginx:non-prod
           namespace: ised-ci
       type: ImageChange
 - apiVersion: v1
@@ -104,8 +109,8 @@ objects:
     annotations: null
     creationTimestamp: null
     labels:
-      app: ised-nginx-${ENVIRONMENT}
-    name: ised-nginx-${ENVIRONMENT}
+      app: ised-nginx-non-prod
+    name: ised-nginx-non-prod
   spec:
     ports:
     - name: 8080-tcp
@@ -113,34 +118,111 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
-      deploymentconfig: ised-nginx-${ENVIRONMENT}
+      deploymentconfig: ised-nginx-non-prod
     sessionAffinity: None
     type: ClusterIP
   status:
     loadBalancer: {}
-# API route.
+# Routes.
 - apiVersion: v1
   kind: Route
   metadata:
     annotations:
       haproxy.router.openshift.io/ip_whitelist: 192.197.178.2/32
     labels:
-      app: ised-nginx-${ENVIRONMENT}
+      app: ised-nginx-non-prod
       domain: ised
-    name: ised-nginx-${ENVIRONMENT}
+    name: ised-nginx-dev
   spec:
-    host: "${ENVIRONMENT}.ised-isde.canada.ca"
+    host: "dev.ised-isde.canada.ca"
     path: "/"
     port:
       targetPort: 8080-tcp
     to:
       kind: Service
-      name: ised-nginx-${ENVIRONMENT}
-    tls:
-      termination: edge
-# Parameters
-parameters:
-  - name: ENVIRONMENT
-    description: "Environment (e.g. dev, uat, bob...)."
-    required: true
-    value: null
+      name: ised-nginx-non-prod
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: 192.197.178.2/32
+    labels:
+      app: ised-nginx-non-prod
+      domain: ised
+    name: ised-nginx-intranet-dev
+  spec:
+    host: "intranet-dev.ised-isde.canada.ca"
+    path: "/"
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: ised-nginx-non-prod
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: 192.197.178.2/32
+    labels:
+      app: ised-nginx-non-prod
+      domain: ised
+    name: ised-nginx-uat
+  spec:
+    host: "uat.ised-isde.canada.ca"
+    path: "/"
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: ised-nginx-non-prod
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: 192.197.178.2/32
+    labels:
+      app: ised-nginx-non-prod
+      domain: ised
+    name: ised-nginx-intranet-uat
+  spec:
+    host: "intranet-uat.ised-isde.canada.ca"
+    path: "/"
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: ised-nginx-non-prod
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: 192.197.178.2/32
+    labels:
+      app: ised-nginx-non-prod
+      domain: ised
+    name: ised-nginx-qa
+  spec:
+    host: "qa.ised-isde.canada.ca"
+    path: "/"
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: ised-nginx-non-prod
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: 192.197.178.2/32
+    labels:
+      app: ised-nginx-non-prod
+      domain: ised
+    name: ised-nginx-intranet-qa
+  spec:
+    host: "intranet-qa.ised-isde.canada.ca"
+    path: "/"
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: ised-nginx-non-prod
