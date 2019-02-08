@@ -20,3 +20,8 @@ When in a pod, to view the nginx config:
 ```
 
 Based on the [NGiNX 1.12 s2i](https://github.com/sclorg/nginx-container/tree/master/1.12) image.
+
+## How do deploy (temp current state)
+s2i builds are currently setup in openshift, but need to be manually run.
+Promotion to production is done with a bamboo.
+ 
