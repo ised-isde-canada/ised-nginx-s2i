@@ -1,0 +1,8 @@
+User-agent: Slurp
+Crawl-delay: 5
+
+User-agent: dotbot
+Crawl-delay: 10
+
+User-agent: Lucidworks-Anda
+Crawl-delay: 5
